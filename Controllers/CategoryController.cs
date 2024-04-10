@@ -1,19 +1,20 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using TeaTimeDemo.Data;
+using TeaTimeDemo.DataAccess.Data;
+using TeaTimeDemo.DataAccess.Repository.IRepository;
 using TeaTimeDemo.Models;
 
 namespace TeaTimeDemo.Controllers
 {
     public class CategoryController : Controller
     {
-        private readonly ApplicationDbContext _db;
-        public CategoryController(ApplicationDbContext db)
+        private readonly ICategoryRepository _categoryRepo;
+        public CategoryController(ICategoryRepository db)
         {
-            _db = db;
+            _categoryRepo = db;
         }
         public IActionResult Index()
         {
-            List<Category> objCategoryList = _db.Categories.ToList();
+            List<Category> objCategoryList = _categoryRepo.GetAll().ToList();
             return View(objCategoryList);
         }
         public IActionResult Create()
@@ -29,8 +30,8 @@ namespace TeaTimeDemo.Controllers
             }
             if (ModelState.IsValid)
             {
-                _db.Categories.Add(obj);
-                _db.SaveChanges();
+                _categoryRepo.Add(obj);
+                _categoryRepo.Save();
                 TempData["success"] = "新增類別成功";
                 return RedirectToAction("Index");
             }
@@ -42,7 +43,7 @@ namespace TeaTimeDemo.Controllers
             {
                 return NotFound();
             }
-            Category? categoryFromDb = _db.Categories.Find(id);
+            Category? categoryFromDb = _categoryRepo.Get(u => u.Id == id);
             if (categoryFromDb == null)
             {
                 return NotFound();
@@ -54,11 +55,12 @@ namespace TeaTimeDemo.Controllers
         {
             if (ModelState.IsValid)
             {
-                _db.Categories.Update(obj);
-                _db.SaveChanges();
+                _categoryRepo.Update(obj);
+                _categoryRepo.Save();
+                TempData["success"] = "類別編輯成功";
                 return RedirectToAction("Index");
             }
-            return View(obj);
+            return View();
         }
         public IActionResult Delete(int? id)
         {
@@ -66,7 +68,7 @@ namespace TeaTimeDemo.Controllers
             {
                 return NotFound();
             }
-            Category categoryFromDb = _db.Categories.Find(id);
+            Category categoryFromDb = _categoryRepo.Get(u => u.Id == id);
             if (categoryFromDb == null)
             {
                 return NotFound();
@@ -76,14 +78,14 @@ namespace TeaTimeDemo.Controllers
         [HttpPost, ActionName("Delete")]
         public IActionResult DeletePost(int? id)
         {
-            Category? obj = _db.Categories.Find(id);
+            Category? obj = _categoryRepo.Get(u => u.Id == id);
             if (obj == null)
             {
                 return NotFound();
             }
-            _db.Categories.Remove(obj);
-            _db.SaveChanges();
-            TempData["error"] = "類別刪除成功";
+            _categoryRepo.Remove(obj);
+            _categoryRepo.Save();
+            TempData["success"] = "類別刪除成功";
             return RedirectToAction("Index");
         }
     }
